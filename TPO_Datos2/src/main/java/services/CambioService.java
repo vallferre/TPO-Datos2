@@ -23,7 +23,7 @@ public class CambioService {
                             "operador", operador
                     )
             );
-            System.out.println("🧾 Cambio registrado en Neo4j");
+            System.out.println("Cambio registrado en Neo4j");
         }
     }
 }

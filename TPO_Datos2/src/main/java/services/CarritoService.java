@@ -15,17 +15,17 @@ public class CarritoService {
 
     public static void agregarProducto(String userId, String codigo, int cantidad) {
         redis.hset("cart:" + userId, codigo, String.valueOf(cantidad));
-        System.out.println("🛒 Producto agregado al carrito: " + codigo);
+        System.out.println("Producto agregado al carrito: " + codigo);
     }
 
     public static void mostrarCarrito(String userId) {
-        System.out.println("🛍️ Carrito de usuario " + userId + ":");
+        System.out.println("Carrito de usuario " + userId + ":");
         redis.hgetall("cart:" + userId).forEach((k, v) ->
                 System.out.println("- " + k + ": " + v + " unidades"));
     }
 
     public static void vaciarCarrito(String userId) {
         redis.del("cart:" + userId);
-        System.out.println("🧹 Carrito vaciado.");
+        System.out.println("Carrito vaciado.");
     }
 }

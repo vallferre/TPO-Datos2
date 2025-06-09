@@ -18,7 +18,7 @@ public class ProductoService {
 
     public static void insertarProducto(Producto p) {
         if (productos.find(new Document("codigo", p.codigo)).first() != null) {
-            System.out.println("⚠️ El producto ya existe.");
+            System.out.println("El producto ya existe.");
             return;
         }
 
@@ -26,14 +26,14 @@ public class ProductoService {
                 .append("nombre", p.nombre)
                 .append("precio", p.precio);
         productos.insertOne(doc);
-        System.out.println("✅ Producto insertado en MongoDB");
+        System.out.println("Producto insertado en MongoDB");
     }
 
     public static void mostrarTodos() {
         for (Document doc : productos.find()) {
-            System.out.println("📦 Código: " + doc.getString("codigo"));
-            System.out.println("🔤 Nombre: " + doc.getString("nombre"));
-            System.out.println("💲 Precio: " + doc.get("precio"));
+            System.out.println("Código: " + doc.getString("codigo"));
+            System.out.println("Nombre: " + doc.getString("nombre"));
+            System.out.println("Precio: " + doc.get("precio"));
             System.out.println("------------");
         }
     }
