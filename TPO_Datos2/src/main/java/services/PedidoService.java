@@ -1,6 +1,6 @@
 package services;
 
-import connectors.PostgreSQL_Connector;
+import connectors.PostgresConnector;
 import connectors.RedisConnector;
 import io.lettuce.core.api.sync.RedisCommands;
 
@@ -12,7 +12,7 @@ import java.util.Map;
 public class PedidoService {
 
     public static int confirmarPedido(String userId) throws Exception {
-        Connection conn = PostgreSQL_Connector.getConnection();
+        Connection conn = PostgresConnector.getConnection();
         RedisCommands<String, String> redis = RedisConnector.getConnection().sync();
 
         Map<String, String> carrito = redis.hgetall("cart:" + userId);

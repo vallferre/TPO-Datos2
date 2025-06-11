@@ -1,6 +1,6 @@
 package services;
 
-import connectors.PostgreSQL_Connector;
+import connectors.PostgresConnector;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 public class FacturaService {
 
     public static void emitirFactura(int pedidoId) throws Exception {
-        Connection conn = PostgreSQL_Connector.getConnection();
+        Connection conn = PostgresConnector.getConnection();
 
         // 1. Verificar si ya existe una factura para ese pedido
         String check = "SELECT factura_id, total_factura FROM facturas WHERE pedido_id = ?";

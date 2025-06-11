@@ -42,11 +42,11 @@ public class Main {
 
             // 9. Sesión del usuario
             SesionService.login(userId, "Valen", "Calle Falsa 123", "12345678");
-            Thread.sleep(3000); // Simula 3 segundos de sesión
+            Thread.sleep(120000); // Simula 2 minutos de sesión
             SesionService.logout(userId);
 
             // 10. Clasificación de usuario
-            String clasificacion = SesionService.clasificarUsuario(userId, java.time.LocalDate.now().toString());
+            String clasificacion = SesionService.clasificarUsuario(userId, java.time.LocalDate.now());
             System.out.println("Clasificación de actividad: " + clasificacion);
 
         } catch (Exception e) {

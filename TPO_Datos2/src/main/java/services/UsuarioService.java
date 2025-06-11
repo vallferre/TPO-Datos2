@@ -1,6 +1,6 @@
 package services;
 
-import connectors.PostgreSQL_Connector;
+import connectors.PostgresConnector;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,7 +9,7 @@ import java.sql.ResultSet;
 public class UsuarioService {
 
     public static void crearUsuario(String nombre, String apellido, String email) throws Exception {
-        Connection conn = PostgreSQL_Connector.getConnection();
+        Connection conn = PostgresConnector.getConnection();
 
         // Verificar si ya existe un usuario con ese email
         String checkSql = "SELECT 1 FROM usuarios WHERE email = ?";
@@ -35,7 +35,7 @@ public class UsuarioService {
     }
 
     public static void listarUsuarios() throws Exception {
-        Connection conn = PostgreSQL_Connector.getConnection();
+        Connection conn = PostgresConnector.getConnection();
         ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM usuarios");
         while (rs.next()) {
             System.out.println(rs.getInt("usuario_id") + ": " + rs.getString("nombre") + " " + rs.getString("apellido") + " (" + rs.getString("email") + ")");
@@ -44,7 +44,7 @@ public class UsuarioService {
     }
 
     public static void eliminarUsuariosDuplicados() throws Exception {
-        Connection conn = PostgreSQL_Connector.getConnection();
+        Connection conn = PostgresConnector.getConnection();
 
         String sql = """
         DELETE FROM usuarios

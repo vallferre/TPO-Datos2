@@ -4,7 +4,7 @@ import connectors.MongoConnector;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import connectors.PostgreSQL_Connector;
+import connectors.PostgresConnector;
 import org.bson.Document;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.*;
@@ -22,7 +22,7 @@ public class ProductoService {
     }
 
     public static void insertarProducto(String codigo, double precio) throws Exception {
-        Connection conn = PostgreSQL_Connector.getConnection();
+        Connection conn = PostgresConnector.getConnection();
 
         // Verificar si ya existe
         String check = "SELECT producto_id FROM productos WHERE codigo = ?";
