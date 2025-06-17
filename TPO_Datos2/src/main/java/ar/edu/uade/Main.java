@@ -7,6 +7,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             String userId = "1";
+            int usuarioIdInt = Integer.parseInt(userId);
             String email = "valen@example.com";
 
             // 1. Crear usuario si no existe
@@ -31,14 +32,13 @@ public class Main {
             // 5. Confirmar pedido desde carrito (usando PostgreSQL)
             int pedidoId = PedidoService.confirmarPedido(userId); // Simulado con precio base
 
-            // 6. Emitir factura (ficticia)
-            FacturaService.emitirFactura(pedidoId);
-
-            // 7. Registrar pago
-            PagoService.registrarPago(1, Integer.parseInt(userId), 51999.98, "Tarjeta", "valen");
+            // 6 y 7. Facturar y registrar pago con medio y operador
+            String medioPago = "Tarjeta";
+            String operador = "valen";
+            PagoService.facturarYRegistrarPago(pedidoId, usuarioIdInt, medioPago, operador);
 
             // 8. Registrar cambio en producto (Neo4j)
-            CambioService.registrarCambio("SKU-004", "precio", "25999.99", "24999.99", "valen");
+            CambioService.registrarCambio("SKU-004", "precio", "25999.99", "24999.99", operador);
 
             // 9. Sesión del usuario
             SesionService.login(userId, "Valen", "Calle Falsa 123", "12345678");

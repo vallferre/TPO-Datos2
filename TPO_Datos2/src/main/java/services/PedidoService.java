@@ -41,17 +41,20 @@ public class PedidoService {
             String codigo = entry.getKey();
 
             // Buscar producto_id real desde código
-            String getIdSql = "SELECT producto_id FROM productos WHERE codigo = ?";
+            String getIdSql = "SELECT producto_id, precio_actual FROM productos WHERE codigo = ?";
             PreparedStatement idStmt = conn.prepareStatement(getIdSql);
             idStmt.setString(1, codigo);
             ResultSet rsId = idStmt.executeQuery();
 
             if (!rsId.next()) {
                 System.out.println("Producto con código " + codigo + " no existe en PostgreSQL.");
+                rsId.close();
+                idStmt.close();
                 continue;
             }
 
             int productoId = rsId.getInt("producto_id");
+            double precioUnitario = rsId.getDouble("precio_actual");
             rsId.close();
             idStmt.close();
 
@@ -60,7 +63,7 @@ public class PedidoService {
             itemStmt.setInt(1, pedidoId);
             itemStmt.setInt(2, productoId);
             itemStmt.setInt(3, Integer.parseInt(entry.getValue()));
-            itemStmt.setDouble(4, 1000); // ficticio
+            itemStmt.setDouble(4, precioUnitario);
             itemStmt.executeUpdate();
             itemStmt.close();
         }
@@ -69,3 +72,4 @@ public class PedidoService {
         return pedidoId;
     }
 }
+

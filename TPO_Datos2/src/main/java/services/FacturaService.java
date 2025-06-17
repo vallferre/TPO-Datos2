@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 
 public class FacturaService {
 
-    public static void emitirFactura(int pedidoId) throws Exception {
+    public static Factura emitirFactura(int pedidoId) throws Exception {
         Connection conn = PostgresConnector.getConnection();
 
         // 1. Verificar si ya existe una factura para ese pedido
@@ -39,7 +39,7 @@ public class FacturaService {
             ResultSet totalRs = totalStmt.executeQuery();
             if (!totalRs.next()) {
                 System.out.println("⚠️ No se encontraron ítems para el pedido.");
-                return;
+                return null;
             }
             totalFactura = totalRs.getDouble("total");
             totalRs.close();
@@ -92,5 +92,19 @@ public class FacturaService {
         detalleStmt.close();
 
         System.out.printf("💵 Total Factura: $%.2f%n", totalFactura);
+
+        return new Factura(facturaId, totalFactura);
     }
+
+    // Clase interna para retornar datos de la factura
+    public static class Factura {
+        public final int id;
+        public final double total;
+
+        public Factura(int id, double total) {
+            this.id = id;
+            this.total = total;
+        }
+    }
+
 }
