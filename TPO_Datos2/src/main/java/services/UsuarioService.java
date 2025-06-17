@@ -8,7 +8,7 @@ import java.sql.ResultSet;
 
 public class UsuarioService {
 
-    public static void crearUsuario(String nombre, String apellido, String email) throws Exception {
+    public static void crearUsuario(String nombre, String apellido, String email, String condicionIva) throws Exception {
         Connection conn = PostgresConnector.getConnection();
 
         // Verificar si ya existe un usuario con ese email
@@ -20,11 +20,12 @@ public class UsuarioService {
         if (rs.next()) {
             System.out.println("El usuario con email " + email + " ya existe. No se insertó.");
         } else {
-            String insertSql = "INSERT INTO usuarios(nombre, apellido, email) VALUES (?, ?, ?)";
+            String insertSql = "INSERT INTO usuarios(nombre, apellido, email, condicionIva) VALUES (?, ?, ?, ?)";
             PreparedStatement insertStmt = conn.prepareStatement(insertSql);
             insertStmt.setString(1, nombre);
             insertStmt.setString(2, apellido);
             insertStmt.setString(3, email);
+            insertStmt.setString(4,condicionIva);
             insertStmt.executeUpdate();
             insertStmt.close();
             System.out.println("Usuario creado en PostgreSQL");
@@ -38,7 +39,7 @@ public class UsuarioService {
         Connection conn = PostgresConnector.getConnection();
         ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM usuarios");
         while (rs.next()) {
-            System.out.println(rs.getInt("usuario_id") + ": " + rs.getString("nombre") + " " + rs.getString("apellido") + " (" + rs.getString("email") + ")");
+            System.out.println(rs.getInt("usuario_id") + ": " + rs.getString("nombre") + " " + rs.getString("apellido") + " (" + rs.getString("email") + ")" + "(" + rs.getString("condicionIva") + ")");
         }
         rs.close();
     }

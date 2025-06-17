@@ -11,7 +11,7 @@ public class Main {
             String email = "valen@example.com";
 
             // 1. Crear usuario si no existe
-            UsuarioService.crearUsuario("Valen", "Test", email);
+            UsuarioService.crearUsuario("Valen", "Test", email, "Responsable inscripto");
             UsuarioService.listarUsuarios();
 
             // 2. Insertar producto en MongoDB y mostrar todos

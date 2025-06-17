@@ -1,99 +1,113 @@
 package services;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import connectors.MongoConnector;
 import connectors.PostgresConnector;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.mongodb.client.model.Filters.eq;
 
 public class FacturaService {
 
     public static Factura emitirFactura(int pedidoId) throws Exception {
         Connection conn = PostgresConnector.getConnection();
 
-        // 1. Verificar si ya existe una factura para ese pedido
-        String check = "SELECT factura_id, total_factura FROM facturas WHERE pedido_id = ?";
-        PreparedStatement checkStmt = conn.prepareStatement(check);
-        checkStmt.setInt(1, pedidoId);
-        ResultSet rs = checkStmt.executeQuery();
+        // 1. Obtener usuario del pedido
+        PreparedStatement metaStmt = conn.prepareStatement("SELECT usuario_id FROM pedidos WHERE pedido_id = ?");
+        metaStmt.setInt(1, pedidoId);
+        ResultSet metaRs = metaStmt.executeQuery();
 
-        int facturaId;
-        double totalFactura;
-
-        if (rs.next()) {
-            facturaId = rs.getInt("factura_id");
-            totalFactura = rs.getDouble("total_factura");
-            System.out.println("📄 Factura existente:");
-        } else {
-            rs.close();
-            checkStmt.close();
-
-            // 2. Calcular total final desde los ítems del pedido
-            String totalSql = """
-                SELECT SUM(cantidad * precio_unitario) AS total
-                FROM pedido_items
-                WHERE pedido_id = ?
-            """;
-            PreparedStatement totalStmt = conn.prepareStatement(totalSql);
-            totalStmt.setInt(1, pedidoId);
-            ResultSet totalRs = totalStmt.executeQuery();
-            if (!totalRs.next()) {
-                System.out.println("⚠️ No se encontraron ítems para el pedido.");
-                return null;
-            }
-            totalFactura = totalRs.getDouble("total");
-            totalRs.close();
-            totalStmt.close();
-
-            // 3. Insertar la nueva factura
-            String insert = "INSERT INTO facturas(pedido_id, total_factura) VALUES (?, ?) RETURNING factura_id";
-            PreparedStatement insertStmt = conn.prepareStatement(insert);
-            insertStmt.setInt(1, pedidoId);
-            insertStmt.setDouble(2, totalFactura);
-            ResultSet newRs = insertStmt.executeQuery();
-            newRs.next();
-            facturaId = newRs.getInt("factura_id");
-            newRs.close();
-            insertStmt.close();
-
-            System.out.println("📄 Factura nueva creada:");
+        if (!metaRs.next()) {
+            System.out.println("❌ Pedido no encontrado.");
+            return;
         }
 
-        // 4. Mostrar detalle del pedido
-        System.out.println("🧾 Factura ID: " + facturaId);
-        System.out.println("📌 Pedido ID: " + pedidoId);
+        int usuarioId = metaRs.getInt("usuario_id");
+        metaRs.close();
+        metaStmt.close();
 
-        String detalleSql = """
-            SELECT p.usuario_id, pi.producto_id, pr.codigo, pi.cantidad, pi.precio_unitario
-            FROM pedidos p
-            JOIN pedido_items pi ON pi.pedido_id = p.pedido_id
+        // 2. Obtener ítems del pedido (con código y cantidad desde PostgreSQL)
+        String sqlItems = """
+            SELECT pr.codigo, pi.cantidad, pi.precio_unitario
+            FROM pedido_items pi
             JOIN productos pr ON pr.producto_id = pi.producto_id
-            WHERE p.pedido_id = ?
+            WHERE pi.pedido_id = ?
         """;
-        PreparedStatement detalleStmt = conn.prepareStatement(detalleSql);
-        detalleStmt.setInt(1, pedidoId);
-        ResultSet detRs = detalleStmt.executeQuery();
 
-        boolean first = true;
-        while (detRs.next()) {
-            if (first) {
-                System.out.println("👤 Usuario ID: " + detRs.getInt("usuario_id"));
-                System.out.println("🛍️ Productos:");
-                first = false;
-            }
-            String codigo = detRs.getString("codigo");
-            int cantidad = detRs.getInt("cantidad");
-            double precio = detRs.getDouble("precio_unitario");
+        PreparedStatement stmtItems = conn.prepareStatement(sqlItems);
+        stmtItems.setInt(1, pedidoId);
+        ResultSet rsItems = stmtItems.executeQuery();
 
-            System.out.printf("   - %s | Cantidad: %d | Precio: %.2f%n", codigo, cantidad, precio);
+        MongoClient mongoClient = MongoConnector.getClient();
+        MongoDatabase mongoDb = mongoClient.getDatabase("ecommerce");
+        MongoCollection<Document> productosMongo = mongoDb.getCollection("productos");
+        MongoCollection<Document> facturas = mongoDb.getCollection("facturas");
+
+        List<Document> productosFactura = new ArrayList<>();
+        double total = 0;
+
+        while (rsItems.next()) {
+            String codigo = rsItems.getString("codigo");
+            int cantidad = rsItems.getInt("cantidad");
+            double precioUnitario = rsItems.getDouble("precio_unitario");
+
+            total += cantidad * precioUnitario;
+
+            // Buscar en MongoDB el nombre y media del producto
+            Document productoMongo = productosMongo.find(eq("codigo", codigo)).first();
+            String nombre = productoMongo != null ? productoMongo.getString("nombre") : "Desconocido";
+            Document media = productoMongo != null && productoMongo.containsKey("media")
+                    ? (Document) productoMongo.get("media") : new Document();
+
+            Document itemFactura = new Document("codigo", codigo)
+                    .append("nombre", nombre)
+                    .append("cantidad", cantidad)
+                    .append("precio_unitario", precioUnitario)
+                    .append("media", media);
+
+            productosFactura.add(itemFactura);
         }
 
-        detRs.close();
-        detalleStmt.close();
+        rsItems.close();
+        stmtItems.close();
 
-        System.out.printf("💵 Total Factura: $%.2f%n", totalFactura);
+        Document factura = new Document("_id", new ObjectId())
+                .append("pedido_id", pedidoId)
+                .append("usuario_id", usuarioId)
+                .append("fecha", LocalDateTime.now().toString())
+                .append("productos", productosFactura)
+                .append("total", total);
 
-        return new Factura(facturaId, totalFactura);
+        facturas.insertOne(factura);
+
+        System.out.println("🧾 Factura generada en MongoDB:");
+        System.out.println(factura.toJson());
+
+        ObjectId facturaId = new ObjectId();
+
+        Document factura = new Document("_id", facturaId)
+                .append("pedido_id", pedidoId)
+                .append("usuario_id", usuarioId)
+                .append("fecha", LocalDateTime.now().toString())
+                .append("productos", productosFactura)
+                .append("total", total);
+
+        facturas.insertOne(factura);
+
+        System.out.println("🧾 Factura generada en MongoDB:");
+        System.out.println(factura.toJson());
+
+        return new Factura(facturaId.toHexString(), pedidoId, total);
     }
 
     // Clase interna para retornar datos de la factura
@@ -106,5 +120,4 @@ public class FacturaService {
             this.total = total;
         }
     }
-
 }

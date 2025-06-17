@@ -29,19 +29,27 @@ public class PostgresConnector {
                 usuario_id SERIAL PRIMARY KEY,
                 nombre VARCHAR(100),
                 apellido VARCHAR(100),
-                email VARCHAR(100) UNIQUE
+                email VARCHAR(100) UNIQUE,
+                condicionIva VARCHAR(100)
             );
         """);
 
         // Tabla productos
         stmt.execute("""
-            CREATE TABLE IF NOT EXISTS productos (
+            CREATE TABLE productos (
                 producto_id SERIAL PRIMARY KEY,
-                codigo VARCHAR(50) UNIQUE,
-                precio_actual DOUBLE PRECISION
+                codigo VARCHAR(50) UNIQUE NOT NULL,
+                precio_actual NUMERIC(10, 2) NOT NULL,
+                moneda VARCHAR(10) DEFAULT 'ARS',
+                foto BYTEA,
+                video BYTEA
             );
         """);
 
+        stmt.execute("""
+            ALTER TABLE productos ADD COLUMN foto BYTEA;
+            ALTER TABLE productos ADD COLUMN video BYTEA;
+        """);
         // Tabla pedidos
         stmt.execute("""
             CREATE TABLE IF NOT EXISTS pedidos (
