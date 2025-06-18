@@ -16,7 +16,7 @@ public class Main {
 
             // 2. Insertar producto en MongoDB y mostrar todos
             Producto p = new Producto("SKU-004", "Auriculares Gamer", 25999.99);
-            ProductoService.insertarProducto("SKU-004", 25999.99);
+            ProductoService.insertarProducto(p);
             ProductoService.agregarComentario("SKU-004", "Muy buenos auriculares con buen sonido.");
             ProductoService.mostrarTodos();
 

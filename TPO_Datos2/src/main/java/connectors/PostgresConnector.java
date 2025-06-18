@@ -91,8 +91,6 @@ public class PostgresConnector {
                     minutes_connected BIGINT
                 );
             """);
-
-            System.out.println("✅ Tablas PostgreSQL listas.");
         }
     }
 }
