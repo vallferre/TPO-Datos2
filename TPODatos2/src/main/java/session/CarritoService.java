@@ -10,7 +10,7 @@ import static session.ProductoService.obtenerProductoPorCodigo;
 
 public class CarritoService {
 
-    private static String keyCarrito(String userId) {
+    public static String keyCarrito(String userId) {
         return "carrito:" + userId;
     }
 
