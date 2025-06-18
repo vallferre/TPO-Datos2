@@ -12,11 +12,6 @@ public class Producto {
         this.codigo = codigo;
     }
 
-
-
-
-
-
     //mongo
 
     public int getCodigo() {
