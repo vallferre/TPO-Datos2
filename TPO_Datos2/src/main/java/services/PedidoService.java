@@ -22,8 +22,23 @@ public class PedidoService {
         }
 
         double total = 0;
-        for (String cantidadStr : carrito.values()) {
-            total += Integer.parseInt(cantidadStr) * 1000; // ficticio
+        for (Map.Entry<String, String> entry : carrito.entrySet()) {
+            String codigo = entry.getKey();
+            int cantidad = Integer.parseInt(entry.getValue());
+
+            // Obtener precio real desde PostgreSQL
+            String sqlPrecio = "SELECT precio_actual FROM productos WHERE codigo = ?";
+            PreparedStatement pst = conn.prepareStatement(sqlPrecio);
+            pst.setString(1, codigo);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                double precioUnitario = rs.getDouble("precio_actual");
+                total += cantidad * precioUnitario;
+            } else {
+                System.out.println("Producto con código " + codigo + " no encontrado para calcular total.");
+            }
+            rs.close();
+            pst.close();
         }
 
         String insertPedido = "INSERT INTO pedidos(usuario_id, total_sin_impuestos, total_final) VALUES (?, ?, ?) RETURNING pedido_id";
@@ -32,44 +47,43 @@ public class PedidoService {
         stmt.setDouble(2, total);
         stmt.setDouble(3, total * 1.21);
         ResultSet rs = stmt.executeQuery();
-        rs.next();
-        int pedidoId = rs.getInt("pedido_id");
-        stmt.close();
+
+        int pedidoId = -1;
+        if (rs.next()) {
+            pedidoId = rs.getInt("pedido_id");
+        }
         rs.close();
+        stmt.close();
 
         for (Map.Entry<String, String> entry : carrito.entrySet()) {
             String codigo = entry.getKey();
+            int cantidad = Integer.parseInt(entry.getValue());
 
-            // Buscar producto_id real desde código
             String getIdSql = "SELECT producto_id, precio_actual FROM productos WHERE codigo = ?";
             PreparedStatement idStmt = conn.prepareStatement(getIdSql);
             idStmt.setString(1, codigo);
             ResultSet rsId = idStmt.executeQuery();
 
-            if (!rsId.next()) {
-                System.out.println("Producto con código " + codigo + " no existe en PostgreSQL.");
-                rsId.close();
-                idStmt.close();
-                continue;
-            }
+            if (rsId.next()) {
+                int productoId = rsId.getInt("producto_id");
+                double precioUnitario = rsId.getDouble("precio_actual");
 
-            int productoId = rsId.getInt("producto_id");
-            double precioUnitario = rsId.getDouble("precio_actual");
+                PreparedStatement itemStmt = conn.prepareStatement(
+                        "INSERT INTO pedido_items(pedido_id, producto_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)");
+                itemStmt.setInt(1, pedidoId);
+                itemStmt.setInt(2, productoId);
+                itemStmt.setInt(3, cantidad);
+                itemStmt.setDouble(4, precioUnitario);
+                itemStmt.executeUpdate();
+                itemStmt.close();
+            } else {
+                System.out.println("Producto con código " + codigo + " no existe en PostgreSQL.");
+            }
             rsId.close();
             idStmt.close();
-
-            PreparedStatement itemStmt = conn.prepareStatement(
-                    "INSERT INTO pedido_items(pedido_id, producto_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)");
-            itemStmt.setInt(1, pedidoId);
-            itemStmt.setInt(2, productoId);
-            itemStmt.setInt(3, Integer.parseInt(entry.getValue()));
-            itemStmt.setDouble(4, precioUnitario);
-            itemStmt.executeUpdate();
-            itemStmt.close();
         }
 
         System.out.println("Pedido confirmado con ID: " + pedidoId);
         return pedidoId;
     }
 }
-
