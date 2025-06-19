@@ -34,21 +34,19 @@ public class Main {
         // Crear un producto
         ProductoService.crearProducto("0001", "Teclado Mecánico", "Teclado mecánico retroiluminado", 150.0);
         ProductoService.crearProducto("0002", "Mouse", "Mouse retroiluminado", 100.0);
+        ProductoService.crearProducto("0003", "Auriculares Air3", "Auriculares SoundPEATS modelo Air3", 175.0);
 
-        // Mostrar producto por código
-        System.out.println("Mostrando producto con código 0001:");
-        ProductoService.mostrarProductoPorCodigo("0001");
+        //Agregar fotos y videos
+        ProductoService.agregarFoto("0003", "SoundPEATS-Air3.png");
+        ProductoService.agregarVideo("0003", "SoundPEATS-Air3.mp4");
 
         // Agregar un comentario (descomentado si se implementa)
-        // ProductoService.agregarComentario("0001", "Excelente producto, muy cómodo para escribir.");
+        ProductoService.agregarComentario("0001", "Excelente producto, muy cómodo para escribir.");
 
         // Mostrar producto actualizado para ver el comentario
         System.out.println("Mostrando producto con código 0001 después de agregar comentario:");
         ProductoService.mostrarProductoPorCodigo("0001");
 
-        // Mostrar datos completos del producto
-        ProductoService.mostrarDatosProducto("0001");
-        System.out.println("");
         System.out.println("Mostrando todos los productos en la base de datos:");
         ProductoService.mostrarTodosLosProductos();
 

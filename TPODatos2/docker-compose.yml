@@ -10,23 +10,6 @@ services:
     volumes:
       - cassandra_data:/var/lib/cassandra
 
-  neo4j:
-    image: neo4j:5.13
-    container_name: neo4j
-    ports:
-      - "7474:7474"     # HTTP Browser
-      - "7687:7687"     # Bolt protocol
-    environment:
-      - NEO4J_AUTH=neo4j/password
-      - NEO4J_dbms_connector_bolt_advertised__address=localhost:7687
-      - NEO4J_dbms_connector_bolt_enabled="true"
-      - NEO4J_dbms_connector_bolt_tls__level=DISABLED
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-      - neo4j_import:/import
-      - neo4j_plugins:/plugins
-
   redis:
     image: redis:7
     container_name: redis
@@ -45,9 +28,5 @@ services:
 
 volumes:
   cassandra_data:
-  neo4j_data:
-  neo4j_logs:
-  neo4j_import:
-  neo4j_plugins:
   redis_data:
   mongo_data:

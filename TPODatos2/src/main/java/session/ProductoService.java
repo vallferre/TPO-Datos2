@@ -33,14 +33,18 @@ public class ProductoService {
             return;
         }
 
+        Document media = new Document("comentarios", new ArrayList<String>())
+                .append("fotos", new ArrayList<String>())
+                .append("videos", new ArrayList<String>());
+
         Document producto = new Document("codigo", codigo)
                 .append("nombre", nombre)
                 .append("descripcion", descripcion)
                 .append("precio", precio)
-                .append("media", new Document("comentarios", new ArrayList<>())); // iniciar lista vacía
+                .append("media", media);
 
         productos.insertOne(producto);
-        System.out.println("✅ Producto insertado correctamente.");
+        System.out.println("✅ Producto " + codigo + " insertado correctamente.");
     }
 
     // 2. Buscar producto por código
@@ -57,6 +61,8 @@ public class ProductoService {
         System.out.println("📄 Descripción: " + doc.getString("descripcion"));
         System.out.println("💲 Precio: " + doc.get("precio"));
         System.out.println("💬 Comentarios: " + ((Document) doc.get("media")).get("comentarios"));
+        System.out.println("🖼️ Fotos " + ((Document) doc.get("media")).get("fotos"));
+        System.out.println("📹 Videos " + ((Document) doc.get("media")).get("videos"));
     }
 
     // 3. Agregar comentario solo si el producto existe
@@ -93,24 +99,10 @@ public class ProductoService {
         datosProducto.add(doc.getString("descripcion"));
         datosProducto.add(doc.get("precio"));
         datosProducto.add(((Document) doc.get("media")).get("comentarios"));
+        datosProducto.add(((Document) doc.get("media")).get("fotos"));
+        datosProducto.add(((Document) doc.get("media")).get("videos"));
 
         return datosProducto;
-    }
-
-    // Nuevo método para mostrar datos del producto en consola, usando obtenerProductoPorCodigo
-    public static void mostrarDatosProducto(String codigo) {
-        List<Object> datosProducto = obtenerProductoPorCodigo(codigo);
-        if (datosProducto.isEmpty()) {
-            System.out.println("Producto con código " + codigo + " no encontrado.");
-            return;
-        }
-
-        System.out.println("Datos del producto con código " + codigo + ":");
-        System.out.println("Código: " + datosProducto.get(0));
-        System.out.println("Nombre: " + datosProducto.get(1));
-        System.out.println("Descripción: " + datosProducto.get(2));
-        System.out.println("Precio: " + datosProducto.get(3));
-        System.out.println("Comentarios: " + datosProducto.get(4));
     }
 
     // Nuevo método para mostrar todos los productos almacenados
@@ -133,6 +125,9 @@ public class ProductoService {
             System.out.println("   Nombre: " + doc.getString("nombre"));
             System.out.println("   Descripción: " + doc.getString("descripcion"));
             System.out.println("   Precio: " + doc.get("precio"));
+            System.out.println("   Comentarios: " + ((Document) doc.get("media")).get("comentarios"));
+            System.out.println("   Fotos " + ((Document) doc.get("media")).get("fotos"));
+            System.out.println("   Videos " + ((Document) doc.get("media")).get("videos"));
             List<?> comentarios = Collections.emptyList();
 
             Object mediaObj = doc.get("media");
@@ -147,5 +142,41 @@ public class ProductoService {
             System.out.println("   Comentarios: " + comentarios);
             System.out.println("--------------------------------------------------");
         }
+    }
+
+    public static void agregarFoto(String codigo, String urlFoto) {
+        Document producto = productos.find(eq("codigo", codigo)).first();
+        if (producto == null) {
+            System.out.println("❌ Producto no encontrado.");
+            return;
+        }
+
+        List<String> fotos = producto.getEmbedded(Arrays.asList("media", "fotos"), List.class);
+        // Verificar si ya existe el comentario
+        if (fotos != null && fotos.contains(urlFoto)) {
+            System.out.println("⚠️ La foto ya existe en el producto con código " + codigo);
+            return;
+        }
+
+        productos.updateOne(eq("codigo", codigo), push("media.fotos", urlFoto));
+        System.out.println("🖼️ Foto agregada a " + codigo);
+    }
+
+    public static void agregarVideo(String codigo, String urlVideo) {
+        Document producto = productos.find(eq("codigo", codigo)).first();
+        if (producto == null) {
+            System.out.println("❌ Producto no encontrado.");
+            return;
+        }
+
+        List<String> videos = producto.getEmbedded(Arrays.asList("media", "videos"), List.class);
+        // Verificar si ya existe el comentario
+        if (videos != null && videos.contains(urlVideo)) {
+            System.out.println("⚠️ El video ya existe en el producto con código " + codigo);
+            return;
+        }
+
+        productos.updateOne(eq("codigo", codigo), push("media.videos", urlVideo));
+        System.out.println("📹 Video agregado a " + codigo);
     }
 }
