@@ -13,7 +13,6 @@ import java.util.Map;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        //FacturacionService.eliminarTodasLasFacturas();
         Usuario valen = new Usuario("valen", "av. maiame", "11223344", "Responsable Inscripto", "valen@gmail.com");
 
         UsuarioSession valenSession = new UsuarioSession(valen);
@@ -116,7 +115,10 @@ public class Main {
 
         // Cierre de conexiones
         CassandraConnector.cerrar();
+        //FacturacionService.eliminarTodasLasFacturas();
         //FacturacionService.imprimirTodasLasFacturas();
+        //FacturacionService.mostrarTodosLosPagos();
+        //FacturacionService.eliminarTodosLosPagos();
 
     }
 }

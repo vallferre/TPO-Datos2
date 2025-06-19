@@ -141,6 +141,33 @@ public class FacturacionService {
             System.out.println("No hay facturas para eliminar.");
         }
     }
+    public static void mostrarTodosLosPagos() {
+        List<Document> pagosList = pagos.find().into(new ArrayList<>());
+        if (pagosList.isEmpty()) {
+            System.out.println("No hay pagos registrados.");
+            return;
+        }
+        System.out.println("\n========================== LISTA DE PAGOS ==========================");
+        for (Document pagoDoc : pagosList) {
+            System.out.println("ID Pago: " + pagoDoc.getObjectId("_id"));
+            System.out.println("Número de Factura: " + pagoDoc.getString("numeroFactura"));
+            System.out.println("Monto: $" + pagoDoc.getDouble("monto"));
+            System.out.println("Fecha de Pago: " + pagoDoc.getDate("fechaPago"));
+            System.out.println("Método de Pago: " + pagoDoc.getString("metodoPago"));
+            System.out.println("-----------------------------------------------------------------------");
+        }
+        System.out.println("==========================================================================");
+    }
+
+    public static void eliminarTodosLosPagos() {
+        long cantidadEliminados = pagos.deleteMany(new Document()).getDeletedCount();
+
+        if (cantidadEliminados > 0) {
+            System.out.println("Se eliminaron " + cantidadEliminados + " pagos exitosamente.");
+        } else {
+            System.out.println("No hay pagos para eliminar.");
+        }
+    }
 
 
 }
