@@ -65,7 +65,14 @@ public class ProductoService {
             System.out.println("⚠️ No se puede agregar comentario. Producto con código " + codigo + " no existe.");
             return;
         }
+        List<String> comentarios = producto.getEmbedded(Arrays.asList("media", "comentarios"), List.class);
+        // Verificar si ya existe el comentario
+        if (comentarios != null && comentarios.contains(comentario)) {
+            System.out.println("⚠️ El comentario ya existe en el producto con código " + codigo);
+            return;
+        }
 
+        // Agregar comentario
         productos.updateOne(eq("codigo", codigo), push("media.comentarios", comentario));
         System.out.println("💬 Comentario agregado a " + codigo);
     }
