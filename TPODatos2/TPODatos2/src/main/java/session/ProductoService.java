@@ -128,7 +128,18 @@ public class ProductoService {
             System.out.println("   Comentarios: " + ((Document) doc.get("media")).get("comentarios"));
             System.out.println("   Fotos " + ((Document) doc.get("media")).get("fotos"));
             System.out.println("   Videos " + ((Document) doc.get("media")).get("videos"));
+            List<?> comentarios = Collections.emptyList();
 
+            Object mediaObj = doc.get("media");
+            if (mediaObj instanceof Document) {
+                Document mediaDoc = (Document) mediaObj;
+                Object comentariosObj = mediaDoc.get("comentarios");
+                if (comentariosObj instanceof List<?>) {
+                    comentarios = (List<?>) comentariosObj;
+                }
+            }
+
+            System.out.println("   Comentarios: " + comentarios);
             System.out.println("--------------------------------------------------");
         }
     }

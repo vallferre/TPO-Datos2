@@ -13,7 +13,6 @@ import java.util.Map;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        //FacturacionService.eliminarTodasLasFacturas();
         Usuario valen = new Usuario("valen", "av. maiame", "11223344", "Responsable Inscripto", "valen@gmail.com");
 
         UsuarioSession valenSession = new UsuarioSession(valen);
@@ -111,12 +110,9 @@ public class Main {
             System.out.println("Pago registrado con tarjeta de crédito");
             // Mostrar factura
             FacturacionService.imprimirFactura(numeroFactura);
-            ///FacturacionService.LogGenerator(numeroFactura);
         }
 
         // Cierre de conexiones
         CassandraConnector.cerrar();
-        //FacturacionService.imprimirTodasLasFacturas();
-
     }
 }
