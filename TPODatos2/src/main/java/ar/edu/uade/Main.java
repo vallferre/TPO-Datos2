@@ -2,6 +2,12 @@ package ar.edu.uade;
 
 import connectors.CassandraConnector;
 import model.*;
+import model.pago.MetodoPago;
+import model.pago.MetodoPagoFactory;
+import model.pago.TarjetaCredito;
+import model.pago.TarjetaFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import session.*;
 import session.UsuarioSession;
 import session.ProductoService;
@@ -9,10 +15,18 @@ import session.CarritoService;
 import session.PedidoService;
 
 import java.time.LocalDate;
-import java.util.Map;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 
 public class Main {
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) throws InterruptedException {
+        DateTimeFormatter formato = DateTimeFormatter.ofPattern("MM/yy");
+        YearMonth vencimiento = YearMonth.parse("12/26", formato);
+
+        MetodoPagoFactory tarjetaFactory = new TarjetaFactory(new TarjetaCredito("1234-5678-9876-5432", "Franco Lovera", "Av. Lima 757", vencimiento, 123, 100000));
+        MetodoPago metodoPago = tarjetaFactory.crearMetodoPago();
         Usuario valen = new Usuario("valen", "av. maiame", "11223344", "Responsable Inscripto", "valen@gmail.com");
 
         UsuarioSession valenSession = new UsuarioSession(valen);
@@ -20,14 +34,6 @@ public class Main {
         // 1. Simula login
         SesionService.login(valen);
         valenSession.guardarUsuario();
-        Thread.sleep(2000); // Esperar 2 segundos para simular actividad
-
-        // 2. Simula logout
-        SesionService.logout(valen);
-
-        // 3. Clasifica al usuario según el tiempo conectado hoy
-        String categoria = SesionService.clasificarUsuario(valen, LocalDate.now());
-        System.out.println("📊 Clasificación del usuario " + valen.getDocumento() + ": " + categoria);
 
         // Mostrar funcionamiento de ProductoService
         System.out.println("--------------- FUNCIONAMIENTO DE ProductoService ---------------");
@@ -40,15 +46,18 @@ public class Main {
         ProductoService.agregarFoto("0003", "SoundPEATS-Air3.png");
         ProductoService.agregarVideo("0003", "SoundPEATS-Air3.mp4");
 
-        // Agregar un comentario (descomentado si se implementa)
+        // Agregar un comentario
         ProductoService.agregarComentario("0001", "Excelente producto, muy cómodo para escribir.");
-
-        // Mostrar producto actualizado para ver el comentario
-        System.out.println("Mostrando producto con código 0001 después de agregar comentario:");
-        ProductoService.mostrarProductoPorCodigo("0001");
 
         System.out.println("Mostrando todos los productos en la base de datos:");
         ProductoService.mostrarTodosLosProductos();
+
+        System.out.println("Cambio precio de 0001");
+        ProductoService.modificarCampoProducto("0001", "precio", 100.0, "admin01");
+        ARREGLAR LOG
+
+
+
 
         // 4. Funcionamiento de CarritoService
         System.out.println("--------------- FUNCIONAMIENTO DE CarritoService ---------------");
@@ -91,7 +100,7 @@ public class Main {
 
         // 5. Procesamiento del carrito para generar un pedido
         System.out.println("\n--------------- GENERANDO PEDIDO ---------------");
-        Pedido pedido = PedidoService.crearPedidoDesdeCarrito(valen);
+        Pedido pedido = PedidoService.crearPedidoDesdeCarrito(valen, metodoPago);
         if (pedido != null) {
             PedidoService.imprimirPedido(pedido);
             // Limpiar carrito después de generar pedido
@@ -104,21 +113,22 @@ public class Main {
         if (pedido != null) {
             // Generar factura
             String numeroFactura = FacturacionService.generarFactura(pedido);
-            System.out.println("Factura generada: " + numeroFactura);
             // Registrar pago
-            FacturacionService.registrarPago(numeroFactura, FormaPago.TARJETA_CREDITO.toString(), pedido.getTotalFinal());
-            System.out.println("Pago registrado con tarjeta de crédito");
+            FacturacionService.registrarPago(numeroFactura, metodoPago, pedido.getTotalFinal());
             // Mostrar factura
             FacturacionService.imprimirFactura(numeroFactura);
-            ///FacturacionService.LogGenerator(numeroFactura);
         }
+
+        Thread.sleep(2000); // Esperar 2 segundos para simular actividad
+
+        // 2. Simula logout
+        SesionService.logout(valen);
+
+        // 3. Clasifica al usuario según el tiempo conectado hoy
+        String categoria = SesionService.clasificarUsuario(valen, LocalDate.now());
+        System.out.println("📊 Clasificación del usuario " + valen.getDocumento() + ": " + categoria);
 
         // Cierre de conexiones
         CassandraConnector.cerrar();
-        //FacturacionService.eliminarTodasLasFacturas();
-        //FacturacionService.imprimirTodasLasFacturas();
-        //FacturacionService.mostrarTodosLosPagos();
-        //FacturacionService.eliminarTodosLosPagos();
-
     }
 }

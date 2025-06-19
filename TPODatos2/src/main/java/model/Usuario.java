@@ -1,5 +1,7 @@
 package model;
 
+import model.pago.MetodoPago;
+
 public class Usuario {
     private String nombre;
     private String direccion;
@@ -34,4 +36,5 @@ public class Usuario {
     public String getEmail() {
         return email;
     }
+
 }

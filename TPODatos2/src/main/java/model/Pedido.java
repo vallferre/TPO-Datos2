@@ -1,5 +1,7 @@
 package model;
 
+import model.pago.MetodoPago;
+
 import java.util.List;
 
 public class Pedido {
@@ -14,13 +16,15 @@ public class Pedido {
     private double totalImpuestos;
     private double totalFinal;
 
-    public Pedido(String usuarioDocumento, String nombreCliente, String direccion, String condicionIVA, List<PedidoItem> items) {
+    private MetodoPago metodoPago;
+
+    public Pedido(String usuarioDocumento, String nombreCliente, String direccion, String condicionIVA, List<PedidoItem> items, MetodoPago metodoPago) {
         this.usuarioDocumento = usuarioDocumento;
         this.nombreCliente = nombreCliente;
         this.direccion = direccion;
         this.condicionIVA = condicionIVA;
         this.items = items;
-
+        this.metodoPago = metodoPago;
         calcularTotales();
     }
 
@@ -81,4 +85,6 @@ public class Pedido {
     public double getTotalFinal() {
         return totalFinal;
     }
+
+    public MetodoPago getMetodoPago() {return metodoPago;}
 }

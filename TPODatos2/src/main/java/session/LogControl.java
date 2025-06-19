@@ -22,12 +22,18 @@ public class LogControl {
 
     }
 
-    public void agregarLog(String descripcion) {        //eset se llama primero crea el log con fecha y una descripcion
-        String fechaHora = obtenerFechaHoraActual();
-        log.append("[").append(fechaHora).append("] ").append(descripcion).append("\n");
-    }
-    public void agregarextra(String descripcion) {  //si se queire se pueden agregar mas comenatrios
-        log.append(" "+descripcion);
+    public void agregarLog(String tipo, String descripcion, String operador, String codigoProducto, Object valorAnterior, Object valorNuevo) {
+        Document log = new Document()
+                .append("tipo", tipo)
+                .append("descripcion", descripcion)
+                .append("operador", operador)
+                .append("fecha", LocalDateTime.now().toString());
+
+        if (codigoProducto != null) log.append("codigo_producto", codigoProducto);
+        if (valorAnterior != null) log.append("valor_anterior", valorAnterior);
+        if (valorNuevo != null) log.append("valor_nuevo", valorNuevo);
+
+        coleccionLogs.insertOne(log);
     }
 
     private String obtenerFechaHoraActual() {

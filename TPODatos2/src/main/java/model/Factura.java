@@ -55,47 +55,6 @@ public class Factura {
     }
 
     // Getters
-    public String getNumeroFactura() {
-        return numeroFactura;
-    }
-
-    public Date getFecha() {
-        return fecha;
-    }
-
-    public String getUsuarioDocumento() {
-        return usuarioDocumento;
-    }
-
-    public String getNombreCliente() {
-        return nombreCliente;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public String getCondicionIVA() {
-        return condicionIVA;
-    }
-
-    public List<PedidoItem> getItems() {
-        return items;
-    }
-
-    public double getSubtotal() {
-        return subtotal;
-    }
-
-    public double getTotalDescuentos() {
-        return totalDescuentos;
-    }
-
-    public double getTotalImpuestos() {
-        return totalImpuestos;
-    }
-
-    public double getTotalFinal() {
-        return totalFinal;
-    }
+    public String getNumeroFactura() { return numeroFactura; }
+    // ... otros getters
 }

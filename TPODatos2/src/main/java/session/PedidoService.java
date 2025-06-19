@@ -4,6 +4,7 @@ import connectors.RedisConnector;
 import model.Pedido;
 import model.PedidoItem;
 import model.Usuario;
+import model.pago.MetodoPago;
 import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
@@ -14,12 +15,7 @@ import static session.CarritoService.keyCarrito;
 import static session.ProductoService.obtenerProductoPorCodigo;
 
 public class PedidoService {
-
-    /**
-     * Crea un pedido a partir del contenido actual del carrito y los datos del usuario.
-     * Aplica impuestos y descuentos según condición IVA del usuario.
-     */
-    public static Pedido crearPedidoDesdeCarrito(Usuario usuario) {
+    public static Pedido crearPedidoDesdeCarrito(Usuario usuario, MetodoPago metodoPago) {
         String userId = usuario.getDocumento();
 
         // Obtener carrito
@@ -82,13 +78,11 @@ public class PedidoService {
                 usuario.getNombre(),
                 usuario.getDireccion(),
                 usuario.getCondicionIva(),
-                items
+                items,
+                metodoPago
         );
     }
 
-    /**
-     * Helper: devuelve el porcentaje de impuesto según condición IVA (simplificado).
-     */
     private static double obtenerPorcentajeImpuesto(String condicionIva) {
         // Ejemplo simple, puede ampliarse a casos reales
         if (condicionIva == null) return 21.0; // default IVA Argentina
@@ -99,14 +93,12 @@ public class PedidoService {
         return 21.0;
     }
 
-    /**
-     * Método para imprimir la info del pedido en consola.
-     */
     public static void imprimirPedido(Pedido pedido) {
         if (pedido == null) {
             System.out.println("Pedido vacío o no generado.");
             return;
         }
+
         System.out.println("=== Pedido para cliente: " + pedido.getNombreCliente() + " ===");
         System.out.println("Documento: " + pedido.getUsuarioDocumento());
         System.out.println("Dirección: " + pedido.getDireccion());

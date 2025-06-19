@@ -47,22 +47,34 @@ public class ProductoService {
         System.out.println("✅ Producto " + codigo + " insertado correctamente.");
     }
 
-    // 2. Buscar producto por código
-    public static void mostrarProductoPorCodigo(String codigo) {
-        Document doc = productos.find(eq("codigo", codigo)).first();
-
-        if (doc == null) {
-            System.out.println("❌ Producto no encontrado.");
+    public static void modificarCampoProducto(String codigo, String campo, Object nuevoValor, String operador) {
+        if ("codigo".equals(campo)) {
+            System.out.println("❌ No se puede modificar el campo 'codigo'.");
             return;
         }
 
-        System.out.println("📦 Código: " + doc.getString("codigo"));
-        System.out.println("🔤 Nombre: " + doc.getString("nombre"));
-        System.out.println("📄 Descripción: " + doc.getString("descripcion"));
-        System.out.println("💲 Precio: " + doc.get("precio"));
-        System.out.println("💬 Comentarios: " + ((Document) doc.get("media")).get("comentarios"));
-        System.out.println("🖼️ Fotos " + ((Document) doc.get("media")).get("fotos"));
-        System.out.println("📹 Videos " + ((Document) doc.get("media")).get("videos"));
+        Document producto = productos.find(eq("codigo", codigo)).first();
+
+        if (producto == null) {
+            System.out.println("❌ Producto con código " + codigo + " no encontrado.");
+            return;
+        }
+
+        Object valorAnterior = producto.get(campo);
+
+        productos.updateOne(eq("codigo", codigo), new Document("$set", new Document(campo, nuevoValor)));
+        System.out.println("✅ Campo '" + campo + "' modificado correctamente para el producto " + codigo + ".");
+
+        // Registrar en log
+        LogControl logControl = new LogControl();
+        logControl.agregarLog(
+                "modificacion_catalogo",
+                "Modificación del campo '" + campo + "'",
+                operador,
+                codigo,
+                valorAnterior,
+                nuevoValor
+        );
     }
 
     // 3. Agregar comentario solo si el producto existe
