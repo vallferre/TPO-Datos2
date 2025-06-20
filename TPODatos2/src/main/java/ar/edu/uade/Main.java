@@ -54,7 +54,8 @@ public class Main {
 
         System.out.println("Cambio precio de 0001");
         ProductoService.modificarCampoProducto("0001", "precio", 100.0, "admin01");
-        ARREGLAR LOG
+        LogControl logs = new LogControl();
+        logs.mostrarLog("0001");
 
 
 

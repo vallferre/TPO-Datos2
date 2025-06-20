@@ -67,14 +67,18 @@ public class ProductoService {
 
         // Registrar en log
         LogControl logControl = new LogControl();
-        logControl.agregarLog(
-                "modificacion_catalogo",
-                "Modificación del campo '" + campo + "'",
-                operador,
-                codigo,
-                valorAnterior,
-                nuevoValor
-        );
+        if (!valorAnterior.equals(nuevoValor)) {
+            logControl.agregarLog(
+                    "modificacion",
+                    "Modificación del campo '" + campo + "'",
+                    operador,
+                    codigo,
+                    campo,
+                    valorAnterior,
+                    nuevoValor
+            );
+        }
+
     }
 
     // 3. Agregar comentario solo si el producto existe
