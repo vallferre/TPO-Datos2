@@ -1,16 +1,14 @@
 package session;
 
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.model.Updates;
 import connectors.MongoConnector;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.FindIterable;
 import org.bson.Document;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.push;
@@ -47,39 +45,65 @@ public class ProductoService {
         System.out.println("✅ Producto " + codigo + " insertado correctamente.");
     }
 
-    public static void modificarCampoProducto(String codigo, String campo, Object nuevoValor, String operador) {
+    public static void modificarCampoProducto(String codigo, String campo, Object valorAnterior, Object nuevoValor, String operador) {
         if ("codigo".equals(campo)) {
             System.out.println("❌ No se puede modificar el campo 'codigo'.");
             return;
         }
 
-        Document producto = productos.find(eq("codigo", codigo)).first();
+        // Si no se pasa valorAnterior, lo buscamos
+        if (valorAnterior == null) {
+            Document producto = productos.find(eq("codigo", codigo)).first();
+            if (producto == null) {
+                System.out.println("❌ Producto con código " + codigo + " no encontrado.");
+                return;
+            }
 
-        if (producto == null) {
-            System.out.println("❌ Producto con código " + codigo + " no encontrado.");
+            // Traducir campo amigable
+            String campoMongo = switch (campo) {
+                case "fotos" -> "media.fotos";
+                case "videos" -> "media.videos";
+                default -> campo;
+            };
+
+            if (campoMongo.contains(".")) {
+                String[] parts = campoMongo.split("\\.");
+                Document subDoc = producto.get(parts[0], Document.class);
+                valorAnterior = subDoc != null ? subDoc.get(parts[1]) : null;
+            } else {
+                valorAnterior = producto.get(campoMongo);
+            }
+        }
+
+        // Comparar
+        if (Objects.equals(valorAnterior, nuevoValor)) {
+            System.out.println("ℹ️ El nuevo valor es igual al anterior, no se realizó modificación.");
             return;
         }
 
-        Object valorAnterior = producto.get(campo);
+        // Campo real en Mongo
+        String campoMongo = switch (campo) {
+            case "fotos" -> "media.fotos";
+            case "videos" -> "media.videos";
+            default -> campo;
+        };
 
-        productos.updateOne(eq("codigo", codigo), new Document("$set", new Document(campo, nuevoValor)));
-        System.out.println("✅ Campo '" + campo + "' modificado correctamente para el producto " + codigo + ".");
+        productos.updateOne(eq("codigo", codigo), Updates.set(campoMongo, nuevoValor));
+        System.out.println("✅ Campo '" + campo + "' actualizado correctamente para el producto " + codigo);
 
-        // Registrar en log
-        LogControl logControl = new LogControl();
-        if (!valorAnterior.equals(nuevoValor)) {
-            logControl.agregarLog(
-                    "modificacion",
-                    "Modificación del campo '" + campo + "'",
-                    operador,
-                    codigo,
-                    campo,
-                    valorAnterior,
-                    nuevoValor
-            );
-        }
-
+        // Registrar log
+        new LogControl().logsCambios(
+                "CATALOGO",
+                "Modificación del campo '" + campo + "'",
+                operador,
+                codigo,
+                campo,
+                valorAnterior,
+                nuevoValor
+        );
     }
+
+
 
     // 3. Agregar comentario solo si el producto existe
     public static void agregarComentario(String codigo, String comentario) {
@@ -150,21 +174,33 @@ public class ProductoService {
     }
 
     public static void agregarFoto(String codigo, String urlFoto) {
+        // 1. Recuperar el documento
         Document producto = productos.find(eq("codigo", codigo)).first();
         if (producto == null) {
             System.out.println("❌ Producto no encontrado.");
             return;
         }
 
-        List<String> fotos = producto.getEmbedded(Arrays.asList("media", "fotos"), List.class);
-        // Verificar si ya existe el comentario
-        if (fotos != null && fotos.contains(urlFoto)) {
-            System.out.println("⚠️ La foto ya existe en el producto con código " + codigo);
-            return;
+        // 2. Obtener el valor actual de media.fotos
+        Object rawFotos = producto.getEmbedded(Arrays.asList("media", "fotos"), Object.class);
+
+        // 3. Si existe y es String, convertirlo en List<String>
+        if (rawFotos instanceof String) {
+            List<String> inicial = new ArrayList<>();
+            inicial.add((String) rawFotos);
+            productos.updateOne(
+                    eq("codigo", codigo),
+                    Updates.set("media.fotos", inicial)
+            );
         }
 
-        productos.updateOne(eq("codigo", codigo), push("media.fotos", urlFoto));
-        System.out.println("🖼️ Foto agregada a " + codigo);
+        // 4. Ahora ya está garantizado que media.fotos es array (o no existe aún)
+        productos.updateOne(
+                eq("codigo", codigo),
+                Updates.addToSet("media.fotos", urlFoto)
+        );
+
+        System.out.println("🖼️ Foto agregada (o ignorada si ya existía) al producto " + codigo);
     }
 
     public static void agregarVideo(String codigo, String urlVideo) {
@@ -174,14 +210,30 @@ public class ProductoService {
             return;
         }
 
-        List<String> videos = producto.getEmbedded(Arrays.asList("media", "videos"), List.class);
-        // Verificar si ya existe el comentario
-        if (videos != null && videos.contains(urlVideo)) {
-            System.out.println("⚠️ El video ya existe en el producto con código " + codigo);
-            return;
+        Object rawVideos = producto.getEmbedded(Arrays.asList("media", "videos"), Object.class);
+
+        if (rawVideos instanceof String) {
+            List<String> inicial = new ArrayList<>();
+            inicial.add((String) rawVideos);
+            productos.updateOne(
+                    eq("codigo", codigo),
+                    Updates.set("media.videos", inicial)
+            );
         }
 
-        productos.updateOne(eq("codigo", codigo), push("media.videos", urlVideo));
-        System.out.println("📹 Video agregado a " + codigo);
+        productos.updateOne(
+                eq("codigo", codigo),
+                Updates.addToSet("media.videos", urlVideo)
+        );
+
+        System.out.println("📹 Video agregado (o ignorado si ya existía) al producto " + codigo);
+    }
+
+
+    public static void borrarTodo(){
+        System.out.println("📜 Borrando productos.");
+
+        productos.deleteMany(new Document());
+
     }
 }

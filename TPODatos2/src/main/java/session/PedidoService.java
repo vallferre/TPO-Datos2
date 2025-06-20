@@ -89,7 +89,7 @@ public class PedidoService {
         String  condicionalIvaLower = condicionIva.toLowerCase();
         if (condicionalIvaLower.contains("exento")) return 0.0;
         if (condicionalIvaLower.contains("responsable inscripto")) return 21.0;
-        if (condicionalIvaLower.contains("monotributo")) return 10.5;
+        if (condicionalIvaLower.contains("monotributista")) return 10.5;
         return 21.0;
     }
 

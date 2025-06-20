@@ -3,8 +3,12 @@ package model;
 import model.pago.MetodoPago;
 
 import java.util.List;
+import java.util.UUID;
 
 public class Pedido {
+
+    private String pedidoId;
+
     private String usuarioDocumento;
     private String nombreCliente;
     private String direccion;
@@ -19,6 +23,7 @@ public class Pedido {
     private MetodoPago metodoPago;
 
     public Pedido(String usuarioDocumento, String nombreCliente, String direccion, String condicionIVA, List<PedidoItem> items, MetodoPago metodoPago) {
+        pedidoId = UUID.randomUUID().toString();
         this.usuarioDocumento = usuarioDocumento;
         this.nombreCliente = nombreCliente;
         this.direccion = direccion;
@@ -49,6 +54,9 @@ public class Pedido {
     }
 
     // Getters
+
+
+    public String getPedidoId() {return pedidoId;}
 
     public String getUsuarioDocumento() {
         return usuarioDocumento;

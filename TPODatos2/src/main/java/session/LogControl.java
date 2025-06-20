@@ -6,6 +6,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import connectors.MongoConnector;
+import model.Factura;
+import model.Pedido;
 import org.bson.Document;
 
 
@@ -16,20 +18,22 @@ import static com.mongodb.client.model.Filters.eq;
 public class LogControl {
     private StringBuilder log;
     private MongoCollection<Document> coleccionLogs;
+    private MongoCollection<Document> coleccionFactLogs;
 
     public LogControl() {
         this.log = new StringBuilder();
         MongoDatabase db = MongoConnector.conectar().getDatabase("mi_base_de_datos");
         coleccionLogs = db.getCollection("logs");
+        coleccionFactLogs = db.getCollection("facturacion_logs");
 
     }
 
-    public void agregarLog(String tipo, String descripcion, String operador, String codigoProducto, String campo, Object valorAnterior, Object valorNuevo) {
+    public void logsCambios(String tipo, String descripcion, String operador, String codigoProducto, String campo, Object valorAnterior, Object valorNuevo) {
         Document log = new Document()
                 .append("tipo", tipo)
                 .append("descripcion", descripcion)
                 .append("operador", operador)
-                .append("fecha", LocalDateTime.now().toString());
+                .append("fecha", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
 
         if (codigoProducto != null) log.append("codigo_producto", codigoProducto);
         if (campo != null) log.append("campo", campo);
@@ -39,18 +43,42 @@ public class LogControl {
         coleccionLogs.insertOne(log);
     }
 
-    private String obtenerFechaHoraActual() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.now().format(formatter);
+    public void logsFacturas(Pedido pedido, Factura factura){
+        Document log = new Document()
+                .append("facturaId", factura.getNumeroFactura())
+                .append("pedidoId", pedido.getPedidoId())
+                .append("usuarioId", pedido.getUsuarioDocumento())
+                .append("nombreUsuario", pedido.getNombreCliente())
+                .append("metodoPago", pedido.getMetodoPago().getClass().getSimpleName())
+                .append("monto",pedido.getTotalFinal())
+                .append("fecha", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+
+        coleccionFactLogs.insertOne(log);
     }
 
-    public void mostrarLog(String codigoProducto) {        //este devuelve el log pór si se queire mirar/printear
+    public void mostrarLogsFacturas(String facturaId){
+        System.out.println(" Log para la factura: " + facturaId);
+
+        FindIterable<Document> logs = coleccionFactLogs.find(eq("facturaId", facturaId));
+
+        for (Document log : logs) {
+            System.out.println(" Código factura: " + log.getString("facturaId"));
+            System.out.println(" Fecha: " + log.getString("fecha"));
+            System.out.println(" Código pedido: " + log.getString("pedidoId"));
+            System.out.println(" Documento usuario: " + log.getString("usuarioId"));
+            System.out.println(" Nombre de Usuario: " + log.getString("nombreUsuario"));
+            System.out.println(" Método de pago: " + log.getString("metodoPago"));
+            System.out.println(" Monto: " + log.getDouble("monto"));
+        }
+    }
+
+    public void mostrarLog(String codigoProducto) {
         System.out.println("📜 Logs para el producto: " + codigoProducto);
 
-        // Filtramos por campo "producto" en los logs
         FindIterable<Document> logs = coleccionLogs.find(eq("codigo_producto", codigoProducto));
 
         for (Document log : logs) {
+            System.out.println(" Código: " + log.getString("codigo_producto"));
             System.out.println("🕓 Fecha: " + log.getString("fecha"));
             System.out.println("🔧 Campo: " + log.getString("campo"));
             System.out.println("👤 Operador: " + log.getString("operador"));
@@ -59,19 +87,12 @@ public class LogControl {
         }
     }
 
-    public void limpiarLog() {      //ESTE va ultimo se USA PARA RESETEAR EL LOG
-        log.setLength(0);
+    public void borrarLogs() {
+        System.out.println("📜 Borrando logs.");
 
+        coleccionLogs.deleteMany(new Document());
+        coleccionFactLogs.deleteMany(new Document());
     }
-
-    /*
-    public void GuardarLog(){   //este va anteultimo, carga el log en la abse de datos
-        Document doc = new Document("logCompleto", obtenerLogCompleto());
-        coleccionLogs.insertOne(doc);
-    }
-
-     */
-
 
     public void mostrarTodosLosLogs() {
         FindIterable<Document> documentos = coleccionLogs.find();
@@ -81,7 +102,6 @@ public class LogControl {
         System.out.println("===== TODOS LOS LOGS =====");
         while (cursor.hasNext()) {
             Document doc = cursor.next();
-            // Suponiendo que el campo que guardás se llama "logCompleto"
             String log = doc.getString("logCompleto");
             System.out.println("--------------------------");
             System.out.println(log);
