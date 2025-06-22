@@ -16,12 +16,19 @@ import java.time.format.DateTimeFormatter;
 public class Main {
     public static void main(String[] args) throws InterruptedException {
         LogControl logs = new LogControl();
-    /*
+
+        /*
         logs.borrarLogs();
         ProductoService.borrarTodo();
         FacturacionService.eliminarTodosLosPagos();
         FacturacionService.eliminarTodasLasFacturas();
-    */
+
+        UsuarioSession.eliminarUsuario();
+        SesionService.borrarSesiones();
+
+        CassandraConnector.cerrar();
+
+         */
 
 
         DateTimeFormatter formato = DateTimeFormatter.ofPattern("MM/yy");
@@ -245,5 +252,4 @@ public class Main {
         // Cierre de conexiones
         CassandraConnector.cerrar();
     }
-
 }

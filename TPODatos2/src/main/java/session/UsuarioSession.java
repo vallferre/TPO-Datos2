@@ -32,9 +32,18 @@ public class UsuarioSession {
             INSERT INTO usuarios (documento, nombre, direccion, condicioniva, email)
             VALUES (?, ?, ?, ?, ?)
         """, documento, nombre, direccion, condicionIVA, email);
-            System.out.println(documento + " guardado con éxito.");
+            System.out.println("Usuario con documento: " + documento + " guardado con éxito.");
         } else {
             System.out.println("⚠️ El usuario con documento " + documento + " ya existe.");
+        }
+    }
+
+    public static void eliminarUsuario() {
+        try(CqlSession session = CassandraConnector.getSession()) {
+            session.execute("TRUNCATE usuarios");
+            System.out.println("Usuarios eliminados.");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 }

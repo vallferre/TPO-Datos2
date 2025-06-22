@@ -97,4 +97,16 @@ public class SesionService {
         else if (total >= 120) return "MEDIUM";
         else return "LOW";
     }
+
+    public static void borrarSesiones() {
+        try(CqlSession session = CassandraConnector.getSession()){
+            session.execute("TRUNCATE sesiones_log");
+
+            System.out.println("Sesiones borradas.");
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+
+    }
 }
